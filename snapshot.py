@@ -74,11 +74,11 @@ def compare_snapshot():
 
         
     else:
-        comparator(parent,child)
+        divider(parent,child)
 
 
 
-def comparator(a,b):
+def divider(a,b):
 
     lst = []
     for i in a:
