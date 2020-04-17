@@ -37,13 +37,13 @@ def show_snapshot():
         print(reader2[i][0]+" -> "+time.ctime(float(reader2[i][1])))
     file1.close()
 
-def parentfinder(a,b):
-    for i in range(len(a)):
-       if(b[1][0] in a[i]):
-           return a,b
+def parentfinder(snapshot1,snapshot2,name1,name2):
+    for i in range(len(snapshot1)):
+       if(snapshot2[1][0] in snapshot1[i]):
+           return snapshot1,snapshot2,name1,name2
     for i in range(len(b)):
-        if(a[1][0] in b[i]):
-            return b,a
+        if(snapshot1[1][0] in snapshot2[i]):
+            return snapshot2,snapshot1,name2,name1
     return 0,0
     
 
@@ -67,18 +67,18 @@ def compare_snapshot():
     f1.remove([''])
     f2.remove([''])
 
-    parent,child=parentfinder(f1,f2)
+    parent,child,parent_name,child_name=parentfinder(f1,f2,name1,name2)
     if(parent==0):
         print("No similarity")
         
 
         
     else:
-        divider(parent,child)
+        divider(parent,child,parent_name,child_name)
 
 
 
-def divider(a,b):
+def divider(a,b,a_name,b_name):
 
     lst = []
     for i in a:
@@ -91,11 +91,11 @@ def divider(a,b):
         print("Same Snapshot")
 
     else:
-        final(lst,b)
+        final(lst,b,a_name,b_name)
 
 
 
-def final(lst,b):
+def final(lst,b,lst_name,b_name):
     for i in range(0,len(b)):
         for j in range(0,len(lst)):
             if(b[i][0] == lst[j][0]):
@@ -108,11 +108,8 @@ def final(lst,b):
 
     for i in new_b:
         if i not in new_lst:
-            print(i+" is not present in parent snapshot")
+            print(i+" is not present in "+lst_name+" snapshot")
 
     for i in new_lst:
         if i not in new_b:
-            print(i+" is not present in child snapshot")
-
-
-    
+            print(i+" is not present in "+b_name+" snapshot")
