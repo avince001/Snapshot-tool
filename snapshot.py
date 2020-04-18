@@ -1,10 +1,11 @@
 import os
-def create_snapshot():
-    name = input("Enter name of snapshot:")
+import time
+
+def create_snapshot(name,path):
+    
     name = name + ".snpst"
     file1 = open(name,"w+")
-    path = input("Enter path:")
-    print(path)
+    
     directory = path[path.rindex('\\')+1:]
     file1.write(directory+"\n")
     file1.write(path+" @# "+str(os.path.getmtime(path))+"\n")
@@ -18,14 +19,16 @@ def create_snapshot():
     file1.close()
         
     
-def show_snapshot():
-    import time
+def show_all_snapshots():
     print("Snapshots are:")
     for root, dirs, files in os.walk("."):
         for file in files:
             if file.endswith('.snpst'):
                 print(file)
-    name = input("Enter name of snapshot to view:")
+
+    
+
+def show_given_snapshot(name):
     name += ".snpst"
     file1 = open(name,"r")
     reader = file1.read()
@@ -47,10 +50,10 @@ def parentfinder(snapshot1,snapshot2,name1,name2):
     return 0,0
     
 
-def compare_snapshot():
-    name1 = input("Enter name of snapshot 1:")
+def compare_snapshot(name1,name2):
+    
     name1 = name1 + ".snpst"
-    name2 = input("Enter name of snapshot 2:")
+    
     name2 = name2 + ".snpst"
     file1 = open(name1,"r")
     file2 = open(name2,"r")
@@ -113,3 +116,33 @@ def final(lst,b,lst_name,b_name):
     for i in new_lst:
         if i not in new_b:
             print(i+" is not present in "+b_name+" snapshot")
+
+
+    
+
+
+
+while(True):
+    print("\n\nSNAPSHOT TOOL")
+    print("\nPress 1 for Creating a Snapshot\nPress 2 to Show all Snapshots\nPress 3 to Compare 2 Snapshots\nPress 4 to Exit\n")
+    choice = int(input("Enter your choice:"))
+    if(choice==1):
+        name = input("Enter Name of Snapshot:")
+        path = input("Enter Path:")
+        create_snapshot(name,path)
+
+
+    elif(choice==2):
+        show_all_snapshots()
+        name = input("Enter Name of Snapshot to view:")
+        show_given_snapshot(name)
+        
+
+    elif(choice==3):
+        name1 = input("Enter Name of Snapshot 1:")
+        name2 = input("Enter Name of Snapshot 2:")
+        compare_snapshot(name1,name2)
+
+
+    else:
+        break
