@@ -2,6 +2,10 @@ import os
 import time
 
 def create_snapshot(name,path):
+    #this function will create the snapshot in local directory
+    #containing the path and their time of creation separated by '@#'
+    #and save with an extension to be uniquely identified
+
     
     #name, path variables will be passed as parameters
     
@@ -35,6 +39,7 @@ def create_snapshot(name,path):
         
     
 def show_all_snapshots():
+    #this function will print the name of all the user created snapshot
     print("Snapshots are:")
     for root, dirs, files in os.walk("."):
         for file in files:
@@ -45,6 +50,9 @@ def show_all_snapshots():
     
 
 def show_given_snapshot(name):
+    #this function will print the data containing the snapshot whose name is passed as parameter
+
+    
     #name will be passed as parameter
     
     name += ".snpst"
@@ -87,6 +95,8 @@ def parentfinder(snapshot1,snapshot2,name1,name2):
 
 def compare_snapshot(name1,name2):
     #2 parameters containing name without the extensions
+    #this function will compare the 2 snapshots and call its sub-funtions
+    #also, it will read the saved snapshots and convert it into list containing [path],[time] as nested list
     
     name1 = name1 + ".snpst"
     #adding extensions to the variable name1
@@ -129,7 +139,7 @@ def compare_snapshot(name1,name2):
 
 
 def divider(parent,child,parent_name,child_name):
-    #this function will only keep that part of parent directory which is needed for comparing and stored in "new_parent"
+    #this function will only keep that part of parent directory which is needed for comparing and store it in "new_parent"
     new_parent = []
     for i in parent:
         if(child[1][0] in i[0]):
@@ -165,15 +175,21 @@ def final(parent,child,parent_name,child_name):
     final_parent = list(i[0] for i in parent)
     final_child = list(i[0] for i in child)
 
+    #to compare snapshot files as per their creation time
+    if(os.path.getctime(parent_name) > os.path.getctime(child_name)):
+        early_snapshot, later_snapshot = child_name, parent_name
+    else:
+        early_snapshot, later_snapshot = parent_name, child_name
+
     #if certain file is not present parent_name snapshot
     for i in final_child:
         if i not in final_parent:
-            print(i+" is not present in Snapshot: "+parent_name)
+            print(i+" is added later in Snapshot: "+later_snapshot)
 
-    ##if certain file is not present parent_name snapshot
+    #if certain file is not present parent_name snapshot
     for i in final_parent:
         if i not in final_child:
-            print(i+" is not present in Snapshot: "+child_name)
+            print(i+" is deleted from Snapshot: "+later_snapshot)
 
 
     
