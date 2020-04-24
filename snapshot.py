@@ -1,9 +1,10 @@
 import os
 import time
+import difflib
 
 def create_snapshot(name,path):
     #this function will create the snapshot in local directory
-    #containing the path and their time of creation separated by '@#'
+    #containing the path and their time of creation separated by '->'
     #and save with an extension to be uniquely identified
 
     
@@ -21,18 +22,18 @@ def create_snapshot(name,path):
     file1.write(directory+"\n")
     #writing into file1
 
-    file1.write(path+" @# "+str(os.path.getmtime(path))+"\n")
+    file1.write(path+" -> "+str(os.path.getmtime(path))+"\n")
     #writing path and modification time into file1
     
     for root, directories, filenames in os.walk(path):
         for directory in directories:
             n1 = os.path.join(root, directory)
-            file1.write(n1+" @# "+str(os.path.getmtime(n1))+"\n")
+            file1.write(n1+" -> "+str(os.path.getctime(n1))+"\n")
 
             #writing sub-path and modification time into file1
         for filename in filenames:
             n2 = os.path.join(root,filename)
-            file1.write(n2+" @# "+str(os.path.getmtime(n2))+"\n")
+            file1.write(n2+" -> "+str(os.path.getmtime(n2))+"\n")
             #writing sub-file and modification time into file1
 
     file1.close()
@@ -46,6 +47,7 @@ def show_all_snapshots():
             if file.endswith('.snpst'):
                 print(file)
                 #will search for all files ending with .snpst recursively and print the names
+    print('\n')
 
     
 
@@ -67,7 +69,7 @@ def show_given_snapshot(name):
     
     reader2 = []
     for i in reader1:
-        reader2.append(i.split(" @# "))
+        reader2.append(i.split(" -> "))
         #reader2 will contain path and time in the list separately 
         
     for i in range(1,len(reader2)-1):
@@ -118,9 +120,9 @@ def compare_snapshot(name1,name2):
     f1 = []
     f2 = []
     for i in ff1_temp:
-        f1.append(i.split(" @# "))
+        f1.append(i.split(" -> "))
     for i in ff2_temp:
-        f2.append(i.split(" @# "))
+        f2.append(i.split(" -> "))
     f1.remove([''])
     f2.remove([''])
     #removing unnecessary spaces which were entered while creating a snapshot and spliting the data as path and their time
@@ -150,7 +152,7 @@ def divider(parent,child,parent_name,child_name):
     #deleting child name from the snapshot, it wont be needed for comparision
     
     if(new_parent == child):
-        print("Same Snapshot")
+        print("No modifications")
         #Same Snapshot if both snapshots are identical in their path and time
 
     else:
@@ -160,90 +162,138 @@ def divider(parent,child,parent_name,child_name):
 
 
 def final(parent,child,parent_name,child_name):
-    #parent snapshot is modified to be compared directly with child snapshot
 
-    #for modification of files and folder
-    for i in range(0,len(child)):
-        for j in range(0,len(parent)):
-            if(child[i][0] == parent[j][0]):
-                if(child[i][1] > parent[j][1]):
-                    print(child[i][0]+" is modified later in Snapshot: "+child_name)
-                if(child[i][1] < parent[j][1]):
-                   print(parent[j][0]+" is modified later in Snapshot: "+parent_name) 
-    
-
-    final_parent = list(i[0] for i in parent)
-    final_child = list(i[0] for i in child)
-
-    #to compare snapshot files as per their creation time
+    #to compare snapshot files as per their creation time and deciding early_snapshot and later_snapshot
     if(os.path.getctime(parent_name) > os.path.getctime(child_name)):
         early_snapshot, later_snapshot = child_name, parent_name
     else:
         early_snapshot, later_snapshot = parent_name, child_name
 
-    #if certain file is not present parent_name snapshot
-    for i in final_child:
-        if i not in final_parent:
-            print(i+" is added later in Snapshot: "+later_snapshot)
+    #adding items from a list(parent,child) to dictionary(parent_dict,child_dict)
+    parent_dict = {}
+    child_dict = {}
+    for i in parent:
+        parent_dict.__setitem__(i[0],i[1])
+    for i in child:
+        child_dict.__setitem__(i[0],i[1])
 
-    #if certain file is not present parent_name snapshot
-    for i in final_parent:
-        if i not in final_child:
-            print(i+" is deleted from Snapshot: "+later_snapshot)
+    #adding only file/directories name into list and skipping their modificatio time
+    list1 = []
+    list2 = []
+    for item in parent_dict.keys():
+        list1.append(item)
+
+    for item in child_dict.keys():
+        list2.append(item)
 
 
+
+    added = []
+    #This list will store file/directory names that have been newly added 
+
+    removed = []
+    #This list will store file/directory names that have been removed
+
+    common_files = []
+    #This list will store file/directory names that are common in both snapshots
+
+    modified = []
+    #This list will store file/directory names that have been modified since old snapshot
+
+
+    #difflib.ndiff: '-': file/directory unique to sequence 1
+    #difflib.ndiff: '+': file/directory unique to sequence 2
+    #difflib.ndiff: ' ': file/directory common to both sequences
+    #difflib.ndiff: '?': file/directory not present in either input sequence
+    #appending into list as per their properties
+    diff = difflib.ndiff('\n'.join(list1).splitlines(),'\n'.join(list2).splitlines())
+    for l in diff:
+        if l.startswith('-'):
+            removed.append(l[1:])
+        elif l.startswith('+'):
+            added.append(l[1:])
+        elif l.startswith('?'):
+            pass
+        else:
+            common_files.append(l.strip())
+    #comparing modified time of files that are present in both snapshots
+    for files in common_files:
+        if parent_dict[files]!=child_dict[files]:
+            modified.append(files)
+
+    #printing file/directory removed from current snapshot
+    print(f"\nFiles/Directories removed from current snapshot: '{later_snapshot}' : ")
+    for i in removed:
+        print(i)
+
+    #printing file/directory added in current snapshot
+    print(f"\nFiles/Directories added in current snapshot '{later_snapshot}' : ")
+    for i in added:
+        print(i)
+
+    #printing file/directory that are modified
+    print("\nFiles/Directories modified: ")
+    for i in modified:
+        print(i)
+
+    
+    
     
 
 
 #main window which the user will be interacted
-            
-while(True):
-    print("\n\nSNAPSHOT TOOL")
-    print("\nPress 1 for Creating a Snapshot\nPress 2 to Show all Snapshots\nPress 3 to Compare 2 Snapshots\nPress 4 to Exit\n")
-    choice = int(input("Enter your choice:"))
-    if(choice==1):
-        name = input("Enter Name of Snapshot:")
-        path = input("Enter Path:")
+if __name__ == '__main__':         
+    while(True):
+        print("\n\nSNAPSHOT TOOL")
+        print("\nPress 1 for Creating a Snapshot\nPress 2 to Show all Snapshots\nPress 3 to Compare 2 Snapshots\nPress 4 to Exit\n")
+        choice = int(input("Enter your choice:"))
+        if(choice==1):
+            name = input("Enter Name of Snapshot:")
+            path = input("Enter Path:")
 
-        #user choice will be passed in the create_snapshot() function as the name and path 
-        try:
-            create_snapshot(name,path)
-        except:
-            print("Error in Snapshot Creation")
-        else:
-            print("Snapshot created successfully!!!")
-
-
-    elif(choice==2):
-        try:
-            show_all_snapshots()
-            #show_all_snapshot() will print all the snapshots created so far
-        except:
-            print("Enter in printing the Snapshots")
-        else:
-        
-            name = input("Enter Name of Snapshot to view:")
-            #Enter the name from the list that will be shown
-            #Note: Enter the name of the snapshots without the extensions
-
+            #user choice will be passed in the create_snapshot() function as the name and path 
             try:
-                show_given_snapshot(name)
-                #selected Snapshot will be displayed
+                create_snapshot(name,path)
             except:
-                print("Error in printing selected Snapshot")
+                print("Error in Snapshot Creation")
+            else:
+                print("Snapshot created successfully!!!")
+
+
+        elif(choice==2):
+            try:
+                show_all_snapshots()
+                #show_all_snapshot() will print all the snapshots created so far
+            except:
+                print("Enter in printing the Snapshots")
+            else:
+            
+                name = input("Enter Name of Snapshot to view:")
+                #Enter the name from the list that will be shown
+                #Note: Enter the name of the snapshots without the extensions
+
+                try:
+                    show_given_snapshot(name)
+                    #selected Snapshot will be displayed
+                except:
+                    print("Error in printing selected Snapshot")
+            
+
+        elif(choice==3):
+            show_all_snapshots()
+            name1 = input("Enter Name of Snapshot 1:")
+            name2 = input("Enter Name of Snapshot 2:")
+            #Enter the name of snapshots you want to compare without the extension
+            try:
+                compare_snapshot(name1,name2)
+                #compare_snapshot() function will be called and compare the 2 snapshots
+            except:
+                print("Error on comparing the Snapshots")
+
         
+        elif(choice==4):
+            break
 
-    elif(choice==3):
-        name1 = input("Enter Name of Snapshot 1:")
-        name2 = input("Enter Name of Snapshot 2:")
-        #Enter the name of snapshots you want to compare without the extension
-        try:
-            compare_snapshot(name1,name2)
-            #compare_snapshot() function will be called and compare the 2 snapshots
-        except:
-            print("Error on comparing the Snapshots")
-
-
-    else:
-        break
-        #program will exit on pressing any other key
+        else:
+            print("Invalid entry\nTry again")
+            #program will exit on pressing any other key
